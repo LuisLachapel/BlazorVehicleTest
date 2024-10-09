@@ -61,15 +61,15 @@ namespace BlazorVehicleTest.Metodos
                         {
                             vehiculos.Add(new tb_vehiculoDto
                             {
-                                Vehiculo_id = reader.GetInt32(reader.GetOrdinal("Vehiculo_id")),
-                                Chasis_No = reader.GetString(reader.GetOrdinal("Chasis_No")),
+                                Vehiculo_id = (int)reader["Vehiculo_id"],
+                                Chasis_No = reader["Chasis_No"].ToString(),
                                 Marca_descripcion = reader["Marca_descripcion"].ToString(),
-                                Modelo_descripcion = reader.GetString(reader.GetOrdinal("Modelo_descripcion")),
-                                Ano = reader.GetInt32(reader.GetOrdinal("Ano")),
-                                Color = reader.GetString(reader.GetOrdinal("Color")),
-                                Placa = reader.GetString(reader.GetOrdinal("Placa")),
-                                Fecha_Registro = reader.GetDateTime(reader.GetOrdinal("Fecha_Registro")),
-                            });
+                                Modelo_descripcion = reader["Modelo_descripcion"].ToString(),
+                                Ano = (int)reader["Ano"],
+                                Color = reader["Color"].ToString(),
+                                Placa = reader["Placa"].ToString(),
+                                Fecha_Registro = (DateTime)reader["Fecha_Registro"]
+                            }); ;
                         }
                     }
                 }
