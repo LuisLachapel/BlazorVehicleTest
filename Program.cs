@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using BlazorVehicleTest.Data;
 using BlazorVehicleTest.Metodos;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +11,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<MetodoVehiculo>();
+builder.Services.AddDbContext<ConexionDBContext>(options =>
+{
+    options.UseSqlServer("name=Conexion");
+});
 //builder.Services.AddSingleton<WeatherForecastService>();
+
+
 
 var app = builder.Build();
 

@@ -1,17 +1,26 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
 using BlazorVehicleTest.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlazorVehicleTest.Metodos
 {
     public class MetodoVehiculo
     {
+
+        private readonly ConexionDBContext _context;
+
+        public MetodoVehiculo(ConexionDBContext context)
+        {
+            _context = context;
+        }
         public void Insertar(tb_vehiculo modelo)
         {
             try
             {
-                ConexionDB.Abrir();
-                SqlCommand sql = new SqlCommand("Insertar_Vehiculo", ConexionDB.conexion);
+                SqlConnection connection = new SqlConnection("Data source = DESKTOP-B63DB53; Initial Catalog = VehicleTest; Integrated Security = True;");
+                connection.Open();
+                SqlCommand sql = new SqlCommand("Insertar_Vehiculo", connection);
                 sql.CommandType = CommandType.StoredProcedure;
                 sql.Parameters.AddWithValue("@Chasis_No", modelo.Chasis_No);
                 sql.Parameters.AddWithValue("@Ano", modelo.Ano);
@@ -26,71 +35,56 @@ namespace BlazorVehicleTest.Metodos
             {
                 throw new Exception(ex.Message);
             }
-            finally
-            {
-                ConexionDB.Cerrar();
-            }
+
         }
 
-        public List<tb_modelo> ObtenerModelo(int marcaId)
+        public async Task<List<tb_marca>> ObtenerMarcas()
         {
-            List<tb_modelo> modelos = new List<tb_modelo>();
-            try
-            {
-                ConexionDB.Abrir();
-                SqlCommand sql = new SqlCommand("Mostrar_Modelo", ConexionDB.conexion);
-                sql.CommandType = CommandType.StoredProcedure;
-                sql.Parameters.AddWithValue("@Marca_id", marcaId);
-                SqlDataReader reader = sql.ExecuteReader();
-                while (reader.Read())
-                {
-                    modelos.Add(new tb_modelo
-                    {
-                        Modelo_id = (int)reader["Modelo_id"],
-                        Marca_id = (int)reader["Marca_id"], 
-                        Modelo_descripcion = reader["Modelo_descripcion"].ToString()
-
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-            finally
-            {
-                ConexionDB.Cerrar();
-            }
-            return modelos;
+            return await _context.tb_marca.ToListAsync();
         }
 
-        public List<tb_marca> ObtenerMarcas()
+        public async Task<List<tb_vehiculoDto>> ObtenerVehiculos()
         {
-            List<tb_marca> marcas = new List<tb_marca>();
-            try
+            List<tb_vehiculoDto> vehiculos = new List<tb_vehiculoDto>();
+
+            using (SqlConnection connection = new SqlConnection("Data source=DESKTOP-B63DB53;Initial Catalog=VehicleTest;Integrated Security=True;"))
             {
-                ConexionDB.Abrir();
-                SqlCommand sql = new SqlCommand("Mostrar_Marca", ConexionDB.conexion);
-                sql.CommandType = CommandType.StoredProcedure;
-                SqlDataReader reader = sql.ExecuteReader();
-                while (reader.Read())
+                await connection.OpenAsync();
+
+                using (SqlCommand sql = new SqlCommand("ObtenerVehiculos", connection))
                 {
-                    marcas.Add(new tb_marca
+                    sql.CommandType = CommandType.StoredProcedure;
+
+                    using (SqlDataReader reader = await sql.ExecuteReaderAsync())
                     {
-                        Marca_id = (int)reader["Marca_id"],
-                        Marca_descripcion = reader["Marca_descripcion"].ToString()
-                    });
+                        while (await reader.ReadAsync())
+                        {
+                            vehiculos.Add(new tb_vehiculoDto
+                            {
+                                Vehiculo_id = reader.GetInt32(reader.GetOrdinal("Vehiculo_id")),
+                                Chasis_No = reader.GetString(reader.GetOrdinal("Chasis_No")),
+                                Marca_descripcion = reader["Marca_descripcion"].ToString(),
+                                Modelo_descripcion = reader.GetString(reader.GetOrdinal("Modelo_descripcion")),
+                                Ano = reader.GetInt32(reader.GetOrdinal("Ano")),
+                                Color = reader.GetString(reader.GetOrdinal("Color")),
+                                Placa = reader.GetString(reader.GetOrdinal("Placa")),
+                                Fecha_Registro = reader.GetDateTime(reader.GetOrdinal("Fecha_Registro")),
+                            });
+                        }
+                    }
                 }
             }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-            finally
-            {
-                ConexionDB.Cerrar();
-            }
-            return marcas;
+
+            return vehiculos;
+        }
+
+
+
+        public async Task<List<tb_modelo>> ObtenerModelos(int marcaId)
+        {
+            return await _context.tb_modelo
+                                 .Where(m => m.Marca_id == marcaId) 
+                                 .ToListAsync();  
         }
     }
 }
